@@ -1,50 +1,60 @@
+# app.R
 
 library(shiny)
 
-
-# Define UI for application that draws a histogram
+# UI code 
 ui <- fluidPage(
-
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
     sidebarLayout(
+        
         sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30), 
-            textInput(inputId = "HistColour", 
-                      label = "What colour for the plot?", 
-                      value = "blue"
-                        )
-        ),
-
-        # Show a plot of the generated distribution
+            
+            actionButton(inputId = "gauss",
+                         label = "Gaussian",
+                         icon = icon("dog")),
+            
+            actionButton(inputId = "unif",
+                         label = "Uniform",
+                         icon = icon("cat"))
+                ), 
+        
         mainPanel(
-           plotOutput("distPlot")
+            plotOutput(outputId = "hist")
+            ),
+        
+        position = "right"
         )
-    )
+
 )
 
-# Define server logic required to draw a histogram
+# Server code
 server <- function(input, output) {
-
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        histCol <- ifelse(input$HistColour %in% colours(),
-                          input$HistColour, "blue")
-            
-            
-        hist(x, breaks = bins, col = histCol, border = 'white')
+    
+    # No. of samples
+    N <- 500
+    
+    # Create data and figure title as reactive values
+    rv <- reactiveValues(data = rnorm(N),
+                         title = "Samples from a Gaussian distribution")
+    
+    # What to do when we click on "Gaussian"
+    observeEvent(input$gauss, {
+        rv$data <- rnorm(N)
+        rv$title <- "Samples from a Gaussian distribution"})
+    
+    # What to do when we click on "Uniform"
+    observeEvent(input$unif, {
+        rv$data <- runif(N)
+        rv$title <- "Samples from a uniform distribution"})
+    
+    observeEvent(rv$data, { print("rv$data changed") })
+    
+    # Histogram
+    output$hist <- renderPlot({
+        hist(rv$data,
+             main = rv$title,
+             breaks = 30)
     })
 }
 
-# Run the application 
+# Create a Shiny app object
 shinyApp(ui = ui, server = server)
